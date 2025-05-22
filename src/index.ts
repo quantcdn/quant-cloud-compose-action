@@ -59,7 +59,7 @@ async function run() {
         core.setFailed('Compose file is invalid');
     }
 
-    core.setOutput('translated_compose', validateResponse.translatedComposeDefinition);
+    core.setOutput('translated_compose', JSON.stringify(validateResponse.translatedComposeDefinition));
 
     core.info(`Successfully translated compose file`);
 }
