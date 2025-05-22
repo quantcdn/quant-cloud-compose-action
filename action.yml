@@ -1,0 +1,22 @@
+name: 'Quant Cloud Compose'
+description: 'Validate and prepare a translated docker compose specification to be used with other Quant Cloud actions'
+inputs:
+  api_key:
+    description: 'Quant API key'
+    required: true
+  organization:
+    description: 'Quant organisation ID'
+    required: true
+  compose_file:
+    description: 'Path to the docker-compose file'
+    required: true
+  base_url:
+    description: 'Quant Cloud API URL'
+    required: false
+    default: 'https://dashboard.quantcdn.io/api/v3'
+outputs:
+  translated_compose:
+    description: 'The translated docker compose specification'
+runs:
+  using: 'node20'
+  main: 'dist/index.js' 
