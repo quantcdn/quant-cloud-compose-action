@@ -1,0 +1,11 @@
+services:
+  php:
+    image: quant/portal-php:latest
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./dockerfiles/php.dockerfile
+    volumes: 
+      - ./laravel-storage:/var/www/html/storage
+    env_file:
+      - .env

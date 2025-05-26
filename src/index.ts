@@ -1,13 +1,18 @@
 import * as core from '@actions/core';
 import { 
-    ApplicationsApi, 
-    Application, 
     ComposeApi,
     ValidateComposeRequest,
     ValidateCompose200Response
 } from 'quant-ts-client';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as yaml from 'js-yaml';
+
+interface ApiError {
+    body?: {
+        message?: string;
+    }
+}
 
 const apiOpts = (apiKey: string) => {
     return{
@@ -35,11 +40,20 @@ async function run() {
         return;
     }
 
+    const composeContentYaml = yaml.load(composeContent);
+
+    if (!composeContentYaml) {
+        core.setFailed('Compose file is not valid YAML');
+        return;
+    }
+
     const composeClient = new ComposeApi(baseUrl);
     composeClient.setDefaultAuthentication(apiOpts(apiKey));
 
     const validateRequest = new ValidateComposeRequest();
-    validateRequest.compose = JSON.stringify(composeContent);
+    validateRequest.compose = yaml.dump(composeContentYaml);
+
+    core.info('Validating compose file');
 
     let validateResponse: ValidateCompose200Response;
 
@@ -56,12 +70,24 @@ async function run() {
         for (const warning of validateResponse.translationWarnings) {
             core.warning(warning);
         }
-        core.setFailed('Compose file is invalid');
     }
 
-    core.setOutput('translated_compose', JSON.stringify(validateResponse.translatedComposeDefinition));
+    const translatedCompose = validateResponse?.translatedComposeDefinition
 
-    core.info(`Successfully translated compose file`);
+    if (!translatedCompose || !('containers' in translatedCompose) || !Array.isArray(translatedCompose.containers)) {
+        core.setFailed('Compose file is invalid');
+        return;
+    }
+
+    if (translatedCompose.containers.length === 0) {
+        core.setFailed('Compose file is invalid');
+        return;
+    }
+
+    const output = JSON.stringify(translatedCompose);
+    core.setOutput('translated_compose', output);
+    core.info(`\n ✅ Successfully translated compose file`);
+    return;
 }
 
 run(); 

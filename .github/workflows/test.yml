@@ -1,0 +1,44 @@
+name: Test Compose Action
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - '.github/workflows/test.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_STEP_DEBUG: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Debug Action Files
+        run: |
+          ls -la
+          ls -la dist/
+          cat action.yml
+
+      - name: Validate compose file
+        uses: ./
+        id: validate-compose-file
+        with:
+          api_key: ${{ secrets.QUANT_API_KEY }}
+          organization: 'quant'
+          compose_file: 'docker-compose.yml'
+          base_url: 'https://portal.stage.quantcdn.io/api/v3'
+
+      - name: Debug output
+        run: |
+          echo "Compose file: ${{ steps.validate-compose-file.outputs.translated_compose }}"
