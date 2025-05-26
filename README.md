@@ -22,4 +22,4 @@ Validate and prepare a translated docker compose specification to be used with o
 
 ## Outputs
 
-* `validated_compose`: The ID of the created environment 
+* `translated_compose`: Service definition to be used with other Quant Cloud actions.
