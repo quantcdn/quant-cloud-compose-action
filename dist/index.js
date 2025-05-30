@@ -67565,6 +67565,7 @@ async function run() {
     const apiKey = core.getInput('api_key', { required: true });
     const org = core.getInput('organization', { required: true });
     const composeFilePath = core.getInput('compose_file', { required: true });
+    const imageTagUpdatesStr = core.getInput('image_tag_updates', { required: false });
     // Default to the public Quant Cloud API
     const baseUrl = core.getInput('base_url', { required: false }) || 'https://dashboard.quantcdn.io/api/v3';
     // Read the docker-compose file
@@ -67606,6 +67607,25 @@ async function run() {
     if (translatedCompose.containers.length === 0) {
         core.setFailed('Compose file is invalid');
         return;
+    }
+    // Apply image tag updates if provided
+    if (imageTagUpdatesStr) {
+        try {
+            const imageTagUpdates = JSON.parse(imageTagUpdatesStr);
+            for (const container of translatedCompose.containers) {
+                if (container.name && imageTagUpdates[container.name]) {
+                    const currentImage = container.image;
+                    if (currentImage) {
+                        const tag = imageTagUpdates[container.name];
+                        currentImage.imageReference.type = tag.includes(':') ? 'external' : 'internal';
+                        currentImage.imageReference.identifier = tag;
+                    }
+                }
+            }
+        }
+        catch (error) {
+            core.warning('Failed to parse image tag updates, skipping tag updates');
+        }
     }
     const output = JSON.stringify(translatedCompose);
     core.setOutput('translated_compose', output);

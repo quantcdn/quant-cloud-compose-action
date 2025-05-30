@@ -38,7 +38,23 @@ jobs:
           organization: 'quant'
           compose_file: 'docker-compose.yml'
           base_url: 'https://portal.stage.quantcdn.io/api/v3'
+          image_tag_updates: '{"drupal": "v1.0.0"}'
 
       - name: Debug output
         run: |
           echo "Compose file: ${{ steps.validate-compose-file.outputs.translated_compose }}"
+
+      - name: Validate image tag updates
+        run: |
+          # Parse the translated compose output
+          COMPOSE=$(echo '${{ steps.validate-compose-file.outputs.translated_compose }}')
+          
+          # Check if drupal container has the correct tag
+          DRUPAL_TAG=$(echo "$COMPOSE" | jq -r '.containers[] | select(.name=="drupal") | .image.imageReference.identifier')
+          
+          if [ "$DRUPAL_TAG" != "v1.0.0" ]; then
+            echo "Expected tag 'v1.0.0' for drupal container, but got '$DRUPAL_TAG'"
+            exit 1
+          fi
+          
+          echo "✅ Image tag validation passed"

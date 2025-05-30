@@ -1,11 +1,40 @@
+version: '3.8'
+
 services:
-  php:
-    image: quant/portal-php:latest
-    restart: unless-stopped
+  drupal:
     build:
       context: .
-      dockerfile: ./dockerfiles/php.dockerfile
-    volumes: 
-      - ./laravel-storage:/var/www/html/storage
-    env_file:
-      - .env
+      dockerfile: Dockerfile
+    ports:
+      - 80
+    volumes:
+      - drupal_data:/var/www/html/sites
+    depends_on:
+      - mariadb
+    environment:
+      - DRUPAL_DATABASE_HOST=mariadb
+      - DRUPAL_DATABASE_PORT_NUMBER=3306
+      - DRUPAL_DATABASE_NAME=drupal
+      - DRUPAL_DATABASE_USER=drupal
+      - DRUPAL_DATABASE_PASSWORD=drupal_password
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  mariadb:
+    image: mariadb:latest
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    environment:
+      - MARIADB_DATABASE=drupal
+      - MARIADB_USER=drupal
+      - MARIADB_PASSWORD=drupal_password
+      - MARIADB_ROOT_PASSWORD=root_password
+    labels:
+      quant.type: none
+volumes:
+  drupal_data:
+  mariadb_data:
