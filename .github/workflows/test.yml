@@ -50,7 +50,7 @@ jobs:
           COMPOSE=$(echo '${{ steps.validate-compose-file.outputs.translated_compose }}')
           
           # Check if drupal container has the correct tag
-          DRUPAL_TAG=$(echo "$COMPOSE" | jq -r '.containers[] | select(.name=="drupal") | .image.imageReference.identifier')
+          DRUPAL_TAG=$(echo "$COMPOSE" | jq -r '.containers[] | select(.name=="drupal") | .imageReference.identifier')
           
           if [ "$DRUPAL_TAG" != "v1.0.0" ]; then
             echo "Expected tag 'v1.0.0' for drupal container, but got '$DRUPAL_TAG'"

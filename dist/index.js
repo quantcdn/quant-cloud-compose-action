@@ -67610,16 +67610,17 @@ async function run() {
     }
     // Apply image tag updates if provided
     if (imageTagUpdatesStr) {
+        core.info('Applying image tag updates');
         try {
             const imageTagUpdates = JSON.parse(imageTagUpdatesStr);
             for (const container of translatedCompose.containers) {
                 if (container.name && imageTagUpdates[container.name]) {
-                    const currentImage = container.image;
-                    if (currentImage) {
-                        const tag = imageTagUpdates[container.name];
-                        currentImage.imageReference.type = tag.includes(':') ? 'external' : 'internal';
-                        currentImage.imageReference.identifier = tag;
-                    }
+                    const tag = imageTagUpdates[container.name];
+                    core.info(`Updated image tag for container ${container.name} to ${tag}`);
+                    container.imageReference = {
+                        type: tag.includes(':') ? 'external' : 'internal',
+                        identifier: tag
+                    };
                 }
             }
         }
@@ -67627,7 +67628,7 @@ async function run() {
             core.warning('Failed to parse image tag updates, skipping tag updates');
         }
     }
-    const output = JSON.stringify(translatedCompose);
+    const output = JSON.stringify(translatedCompose, null, 2);
     core.setOutput('translated_compose', output);
     core.info(`\n ✅ Successfully translated compose file`);
     return;
