@@ -17,6 +17,9 @@ inputs:
     description: 'Quant Cloud API URL'
     required: false
     default: 'https://dashboard.quantcdn.io/api/v3'
+  image_tag_updates:
+    description: 'JSON object mapping container names to new image tags (e.g. {"service1": "v2", "service2": "feature-x"})'
+    required: false
 outputs:
   translated_compose:
     description: 'The translated docker compose specification'
