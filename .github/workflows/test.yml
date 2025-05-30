@@ -3,8 +3,6 @@ name: Test Compose Action
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
     paths:
       - 'src/**'
       - '.github/workflows/test.yml'
