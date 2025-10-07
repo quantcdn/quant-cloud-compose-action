@@ -32,6 +32,7 @@ async function run() {
     const apiKey = core.getInput('api_key', { required: true });
     const org = core.getInput('organization', { required: true });
     const composeFilePath = core.getInput('compose_file', { required: true });
+    const imageSuffix = core.getInput('image_suffix', { required: false });
     const imageTagUpdatesStr = core.getInput('image_tag_updates', { required: false });
     
     // Default to the public Quant Cloud API
@@ -57,6 +58,12 @@ async function run() {
 
     const validateRequest = new ValidateComposeRequest();
     validateRequest.compose = yaml.dump(composeContentYaml);
+    
+    // Apply image suffix if provided (cleaner approach for consistent tagging)
+    if (imageSuffix) {
+        core.info(`Using image suffix: ${imageSuffix}`);
+        validateRequest.imageSuffix = imageSuffix;
+    }
 
     core.info('Validating compose file');
 
@@ -89,7 +96,8 @@ async function run() {
         return;
     }
 
-    // Apply image tag updates if provided
+    // Apply image tag updates if provided (for more complex per-container tag updates)
+    // Note: image_suffix is preferred for simpler use cases
     if (imageTagUpdatesStr) {
         core.info('Applying image tag updates');
         try {

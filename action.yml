@@ -17,8 +17,11 @@ inputs:
     description: 'Quant Cloud API URL'
     required: false
     default: 'https://dashboard.quantcdn.io/api/v3'
+  image_suffix:
+    description: 'Optional suffix to append to internal image tags (e.g. "feature-xyz" converts "nginx" to "nginx-feature-xyz")'
+    required: false
   image_tag_updates:
-    description: 'JSON object mapping container names to new image tags (e.g. {"service1": "v2", "service2": "feature-x"})'
+    description: 'JSON object mapping container names to new image tags (e.g. {"service1": "v2", "service2": "feature-x"}). Use image_suffix for simpler scenarios.'
     required: false
 outputs:
   translated_compose:
