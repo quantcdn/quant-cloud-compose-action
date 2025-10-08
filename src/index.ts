@@ -3,7 +3,7 @@ import {
     ComposeApi,
     ValidateComposeRequest,
     ValidateCompose200Response
-} from 'quant-ts-client';
+} from '@quantcdn/quant-client';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
@@ -72,8 +72,25 @@ async function run() {
     try {
         const { body } = await composeClient.validateCompose(org, validateRequest);
         validateResponse = body;
-    } catch (error) {
-        core.setFailed('Compose file is invalid');
+    } catch (error: any) {
+        core.error('Failed to validate compose file');
+        
+        // Log detailed error information
+        if (error.response) {
+            core.error(`Status: ${error.response.statusCode}`);
+            if (error.response.body) {
+                const errorBody = typeof error.response.body === 'string' 
+                    ? error.response.body 
+                    : JSON.stringify(error.response.body, null, 2);
+                core.error(`Response: ${errorBody}`);
+            }
+        } else if (error.message) {
+            core.error(`Error: ${error.message}`);
+        } else {
+            core.error(`Error: ${JSON.stringify(error, null, 2)}`);
+        }
+        
+        core.setFailed('Compose file validation failed - see logs above for details');
         return;
     }
 
