@@ -27,5 +27,5 @@ outputs:
   translated_compose:
     description: 'The translated docker compose specification'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js' 
