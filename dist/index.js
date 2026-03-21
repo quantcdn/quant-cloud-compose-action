@@ -4076,14 +4076,20 @@ class BackupManagementApi {
         });
     }
     /**
-     *
+     * Retrieves a list of backups (database or filesystem) for the environment with status, size, and metadata. Supports filtering and ordering via query parameters.
      * @summary List backups for an environment
      * @param organisation The organisation ID
      * @param application The application ID
      * @param environment The environment ID
      * @param type The backup type
+     * @param order Sort order for backups by creation date (asc &#x3D; oldest first, desc &#x3D; newest first)
+     * @param limit Maximum number of backups to return (max 100)
+     * @param createdBefore Only return backups created before this ISO 8601 timestamp (e.g., 2025-01-01T00:00:00Z)
+     * @param createdAfter Only return backups created after this ISO 8601 timestamp (e.g., 2024-12-01T00:00:00Z)
+     * @param status Filter backups by status
+     * @param nextToken Token for retrieving the next page of results
      */
-    listBackups(organisation, application, environment, type, options = { headers: {} }) {
+    listBackups(organisation, application, environment, type, order, limit, createdBefore, createdAfter, status, nextToken, options = { headers: {} }) {
         return __awaiter(this, void 0, void 0, function* () {
             const localVarPath = this.basePath + '/organisations/{organisation}/applications/{application}/environments/{environment}/backups/{type}'
                 .replace('{' + 'organisation' + '}', encodeURIComponent(String(organisation)))
@@ -4116,6 +4122,24 @@ class BackupManagementApi {
             // verify required parameter 'type' is not null or undefined
             if (type === null || type === undefined) {
                 throw new Error('Required parameter type was null or undefined when calling listBackups.');
+            }
+            if (order !== undefined) {
+                localVarQueryParameters['order'] = models_1.ObjectSerializer.serialize(order, "'asc' | 'desc'");
+            }
+            if (limit !== undefined) {
+                localVarQueryParameters['limit'] = models_1.ObjectSerializer.serialize(limit, "number");
+            }
+            if (createdBefore !== undefined) {
+                localVarQueryParameters['createdBefore'] = models_1.ObjectSerializer.serialize(createdBefore, "Date");
+            }
+            if (createdAfter !== undefined) {
+                localVarQueryParameters['createdAfter'] = models_1.ObjectSerializer.serialize(createdAfter, "Date");
+            }
+            if (status !== undefined) {
+                localVarQueryParameters['status'] = models_1.ObjectSerializer.serialize(status, "'completed' | 'failed' | 'running'");
+            }
+            if (nextToken !== undefined) {
+                localVarQueryParameters['nextToken'] = models_1.ObjectSerializer.serialize(nextToken, "string");
             }
             Object.assign(localVarHeaderParams, options.headers);
             let localVarUseFormData = false;
@@ -6382,8 +6406,8 @@ class EnvironmentsApi {
         });
     }
     /**
-     *
-     * @summary Update the compose for an environment
+     * Replaces the entire task definition for the environment based on the provided multi-container compose definition. This will create a new task definition revision and update the ECS service, triggering a redeployment. Optionally accepts minCapacity and maxCapacity at the root level for convenience.
+     * @summary Update Environment Compose Definition
      * @param organisation The organisation ID
      * @param application The application ID
      * @param environment The environment ID
@@ -6397,6 +6421,14 @@ class EnvironmentsApi {
                 .replace('{' + 'environment' + '}', encodeURIComponent(String(environment)));
             let localVarQueryParameters = {};
             let localVarHeaderParams = Object.assign({}, this._defaultHeaders);
+            const produces = ['application/json'];
+            // give precedence to 'application/json'
+            if (produces.indexOf('application/json') >= 0) {
+                localVarHeaderParams.Accept = 'application/json';
+            }
+            else {
+                localVarHeaderParams.Accept = produces.join(',');
+            }
             let localVarFormParams = {};
             // verify required parameter 'organisation' is not null or undefined
             if (organisation === null || organisation === undefined) {
@@ -8027,6 +8059,14 @@ Compose.attributeTypeMap = [
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Container = void 0;
 class Container {
+    constructor() {
+        this['essential'] = true;
+        this['readonlyRootFilesystem'] = false;
+        /**
+        * Enable origin protection for all exposed ports on this container
+        */
+        this['originProtection'] = false;
+    }
     static getAttributeTypeMap() {
         return Container.attributeTypeMap;
     }
@@ -8075,6 +8115,21 @@ Container.attributeTypeMap = [
         "type": "Array<ContainerEnvironmentInner>"
     },
     {
+        "name": "secrets",
+        "baseName": "secrets",
+        "type": "Array<ContainerSecretsInner>"
+    },
+    {
+        "name": "healthCheck",
+        "baseName": "healthCheck",
+        "type": "ContainerHealthCheck"
+    },
+    {
+        "name": "dependsOn",
+        "baseName": "dependsOn",
+        "type": "Array<ContainerDependsOnInner>"
+    },
+    {
         "name": "command",
         "baseName": "command",
         "type": "Array<string>"
@@ -8085,11 +8140,81 @@ Container.attributeTypeMap = [
         "type": "Array<string>"
     },
     {
+        "name": "workingDirectory",
+        "baseName": "workingDirectory",
+        "type": "string"
+    },
+    {
         "name": "essential",
         "baseName": "essential",
         "type": "boolean"
+    },
+    {
+        "name": "readonlyRootFilesystem",
+        "baseName": "readonlyRootFilesystem",
+        "type": "boolean"
+    },
+    {
+        "name": "user",
+        "baseName": "user",
+        "type": "string"
+    },
+    {
+        "name": "originProtection",
+        "baseName": "originProtection",
+        "type": "boolean"
     }
 ];
+
+
+/***/ }),
+
+/***/ 2968:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * QuantCloud API
+ * QuantCloud API
+ *
+ * The version of the OpenAPI document: 1.0.0
+ *
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ContainerDependsOnInner = void 0;
+class ContainerDependsOnInner {
+    static getAttributeTypeMap() {
+        return ContainerDependsOnInner.attributeTypeMap;
+    }
+}
+exports.ContainerDependsOnInner = ContainerDependsOnInner;
+ContainerDependsOnInner.discriminator = undefined;
+ContainerDependsOnInner.attributeTypeMap = [
+    {
+        "name": "containerName",
+        "baseName": "containerName",
+        "type": "string"
+    },
+    {
+        "name": "condition",
+        "baseName": "condition",
+        "type": "ContainerDependsOnInner.ConditionEnum"
+    }
+];
+(function (ContainerDependsOnInner) {
+    let ConditionEnum;
+    (function (ConditionEnum) {
+        ConditionEnum[ConditionEnum["Start"] = 'START'] = "Start";
+        ConditionEnum[ConditionEnum["Healthy"] = 'HEALTHY'] = "Healthy";
+        ConditionEnum[ConditionEnum["Complete"] = 'COMPLETE'] = "Complete";
+        ConditionEnum[ConditionEnum["Success"] = 'SUCCESS'] = "Success";
+    })(ConditionEnum = ContainerDependsOnInner.ConditionEnum || (ContainerDependsOnInner.ConditionEnum = {}));
+})(ContainerDependsOnInner = exports.ContainerDependsOnInner || (exports.ContainerDependsOnInner = {}));
 
 
 /***/ }),
@@ -8135,6 +8260,79 @@ ContainerEnvironmentInner.attributeTypeMap = [
 
 /***/ }),
 
+/***/ 5850:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * QuantCloud API
+ * QuantCloud API
+ *
+ * The version of the OpenAPI document: 1.0.0
+ *
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ContainerHealthCheck = void 0;
+/**
+* Container health check configuration
+*/
+class ContainerHealthCheck {
+    constructor() {
+        /**
+        * Time period (seconds) between health checks
+        */
+        this['interval'] = 30;
+        /**
+        * Time period (seconds) to wait for a health check to return
+        */
+        this['timeout'] = 5;
+        /**
+        * Number of times to retry a failed health check
+        */
+        this['retries'] = 3;
+    }
+    static getAttributeTypeMap() {
+        return ContainerHealthCheck.attributeTypeMap;
+    }
+}
+exports.ContainerHealthCheck = ContainerHealthCheck;
+ContainerHealthCheck.discriminator = undefined;
+ContainerHealthCheck.attributeTypeMap = [
+    {
+        "name": "command",
+        "baseName": "command",
+        "type": "Array<string>"
+    },
+    {
+        "name": "interval",
+        "baseName": "interval",
+        "type": "number"
+    },
+    {
+        "name": "timeout",
+        "baseName": "timeout",
+        "type": "number"
+    },
+    {
+        "name": "retries",
+        "baseName": "retries",
+        "type": "number"
+    },
+    {
+        "name": "startPeriod",
+        "baseName": "startPeriod",
+        "type": "number"
+    }
+];
+
+
+/***/ }),
+
 /***/ 5244:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -8162,19 +8360,9 @@ exports.ContainerImageReference = ContainerImageReference;
 ContainerImageReference.discriminator = undefined;
 ContainerImageReference.attributeTypeMap = [
     {
-        "name": "repository",
-        "baseName": "repository",
-        "type": "string"
-    },
-    {
-        "name": "tag",
-        "baseName": "tag",
-        "type": "string"
-    },
-    {
         "name": "type",
         "baseName": "type",
-        "type": "string"
+        "type": "ContainerImageReference.TypeEnum"
     },
     {
         "name": "identifier",
@@ -8182,6 +8370,13 @@ ContainerImageReference.attributeTypeMap = [
         "type": "string"
     }
 ];
+(function (ContainerImageReference) {
+    let TypeEnum;
+    (function (TypeEnum) {
+        TypeEnum[TypeEnum["Internal"] = 'internal'] = "Internal";
+        TypeEnum[TypeEnum["External"] = 'external'] = "External";
+    })(TypeEnum = ContainerImageReference.TypeEnum || (ContainerImageReference.TypeEnum = {}));
+})(ContainerImageReference = exports.ContainerImageReference || (exports.ContainerImageReference = {}));
 
 
 /***/ }),
@@ -8205,6 +8400,9 @@ ContainerImageReference.attributeTypeMap = [
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContainerMountPointsInner = void 0;
 class ContainerMountPointsInner {
+    constructor() {
+        this['readOnly'] = false;
+    }
     static getAttributeTypeMap() {
         return ContainerMountPointsInner.attributeTypeMap;
     }
@@ -8226,6 +8424,47 @@ ContainerMountPointsInner.attributeTypeMap = [
         "name": "readOnly",
         "baseName": "readOnly",
         "type": "boolean"
+    }
+];
+
+
+/***/ }),
+
+/***/ 3849:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * QuantCloud API
+ * QuantCloud API
+ *
+ * The version of the OpenAPI document: 1.0.0
+ *
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ContainerSecretsInner = void 0;
+class ContainerSecretsInner {
+    static getAttributeTypeMap() {
+        return ContainerSecretsInner.attributeTypeMap;
+    }
+}
+exports.ContainerSecretsInner = ContainerSecretsInner;
+ContainerSecretsInner.discriminator = undefined;
+ContainerSecretsInner.attributeTypeMap = [
+    {
+        "name": "name",
+        "baseName": "name",
+        "type": "string"
+    },
+    {
+        "name": "valueFrom",
+        "baseName": "valueFrom",
+        "type": "string"
     }
 ];
 
@@ -9077,6 +9316,11 @@ ListBackups200Response.attributeTypeMap = [
         "type": "number"
     },
     {
+        "name": "nextToken",
+        "baseName": "nextToken",
+        "type": "string"
+    },
+    {
         "name": "message",
         "baseName": "message",
         "type": "string"
@@ -9182,6 +9426,42 @@ ListBackups200ResponseBackupsInner.attributeTypeMap = [
 
 /***/ }),
 
+/***/ 8759:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * QuantCloud API
+ * QuantCloud API
+ *
+ * The version of the OpenAPI document: 1.0.0
+ *
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ListBackups422Response = void 0;
+class ListBackups422Response {
+    static getAttributeTypeMap() {
+        return ListBackups422Response.attributeTypeMap;
+    }
+}
+exports.ListBackups422Response = ListBackups422Response;
+ListBackups422Response.discriminator = undefined;
+ListBackups422Response.attributeTypeMap = [
+    {
+        "name": "error",
+        "baseName": "error",
+        "type": "string"
+    }
+];
+
+
+/***/ }),
+
 /***/ 4623:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -9207,9 +9487,12 @@ __exportStar(__nccwpck_require__(3139), exports);
 __exportStar(__nccwpck_require__(5471), exports);
 __exportStar(__nccwpck_require__(6577), exports);
 __exportStar(__nccwpck_require__(5822), exports);
+__exportStar(__nccwpck_require__(2968), exports);
 __exportStar(__nccwpck_require__(8213), exports);
+__exportStar(__nccwpck_require__(5850), exports);
 __exportStar(__nccwpck_require__(5244), exports);
 __exportStar(__nccwpck_require__(5436), exports);
+__exportStar(__nccwpck_require__(3849), exports);
 __exportStar(__nccwpck_require__(7152), exports);
 __exportStar(__nccwpck_require__(6958), exports);
 __exportStar(__nccwpck_require__(8811), exports);
@@ -9226,6 +9509,7 @@ __exportStar(__nccwpck_require__(902), exports);
 __exportStar(__nccwpck_require__(978), exports);
 __exportStar(__nccwpck_require__(6769), exports);
 __exportStar(__nccwpck_require__(3328), exports);
+__exportStar(__nccwpck_require__(8759), exports);
 __exportStar(__nccwpck_require__(2762), exports);
 __exportStar(__nccwpck_require__(6033), exports);
 __exportStar(__nccwpck_require__(7965), exports);
@@ -9242,9 +9526,12 @@ const application_1 = __nccwpck_require__(3139);
 const command_1 = __nccwpck_require__(5471);
 const compose_1 = __nccwpck_require__(6577);
 const container_1 = __nccwpck_require__(5822);
+const containerDependsOnInner_1 = __nccwpck_require__(2968);
 const containerEnvironmentInner_1 = __nccwpck_require__(8213);
+const containerHealthCheck_1 = __nccwpck_require__(5850);
 const containerImageReference_1 = __nccwpck_require__(5244);
 const containerMountPointsInner_1 = __nccwpck_require__(5436);
+const containerSecretsInner_1 = __nccwpck_require__(3849);
 const createBackup202Response_1 = __nccwpck_require__(7152);
 const createBackupRequest_1 = __nccwpck_require__(6958);
 const createCommandRequest_1 = __nccwpck_require__(8811);
@@ -9261,6 +9548,7 @@ const getSshAccessCredentials200Response_1 = __nccwpck_require__(902);
 const getSshAccessCredentials200ResponseCredentials_1 = __nccwpck_require__(978);
 const listBackups200Response_1 = __nccwpck_require__(6769);
 const listBackups200ResponseBackupsInner_1 = __nccwpck_require__(3328);
+const listBackups422Response_1 = __nccwpck_require__(8759);
 const scalingPolicy_1 = __nccwpck_require__(2762);
 const syncOperation_1 = __nccwpck_require__(6033);
 const syncToEnvironmentRequest_1 = __nccwpck_require__(7965);
@@ -9285,6 +9573,8 @@ let primitives = [
     "any"
 ];
 let enumsMap = {
+    "ContainerDependsOnInner.ConditionEnum": containerDependsOnInner_1.ContainerDependsOnInner.ConditionEnum,
+    "ContainerImageReference.TypeEnum": containerImageReference_1.ContainerImageReference.TypeEnum,
     "CronRun.RunTypeEnum": cronRun_1.CronRun.RunTypeEnum,
     "CronRun.StatusEnum": cronRun_1.CronRun.StatusEnum,
     "ScalingPolicy.MetricEnum": scalingPolicy_1.ScalingPolicy.MetricEnum,
@@ -9294,9 +9584,12 @@ let typeMap = {
     "Command": command_1.Command,
     "Compose": compose_1.Compose,
     "Container": container_1.Container,
+    "ContainerDependsOnInner": containerDependsOnInner_1.ContainerDependsOnInner,
     "ContainerEnvironmentInner": containerEnvironmentInner_1.ContainerEnvironmentInner,
+    "ContainerHealthCheck": containerHealthCheck_1.ContainerHealthCheck,
     "ContainerImageReference": containerImageReference_1.ContainerImageReference,
     "ContainerMountPointsInner": containerMountPointsInner_1.ContainerMountPointsInner,
+    "ContainerSecretsInner": containerSecretsInner_1.ContainerSecretsInner,
     "CreateBackup202Response": createBackup202Response_1.CreateBackup202Response,
     "CreateBackupRequest": createBackupRequest_1.CreateBackupRequest,
     "CreateCommandRequest": createCommandRequest_1.CreateCommandRequest,
@@ -9313,6 +9606,7 @@ let typeMap = {
     "GetSshAccessCredentials200ResponseCredentials": getSshAccessCredentials200ResponseCredentials_1.GetSshAccessCredentials200ResponseCredentials,
     "ListBackups200Response": listBackups200Response_1.ListBackups200Response,
     "ListBackups200ResponseBackupsInner": listBackups200ResponseBackupsInner_1.ListBackups200ResponseBackupsInner,
+    "ListBackups422Response": listBackups422Response_1.ListBackups422Response,
     "ScalingPolicy": scalingPolicy_1.ScalingPolicy,
     "SyncOperation": syncOperation_1.SyncOperation,
     "SyncToEnvironmentRequest": syncToEnvironmentRequest_1.SyncToEnvironmentRequest,
@@ -9810,6 +10104,16 @@ UpdateEnvironmentRequest.attributeTypeMap = [
         "name": "composeDefinition",
         "baseName": "composeDefinition",
         "type": "Compose"
+    },
+    {
+        "name": "minCapacity",
+        "baseName": "minCapacity",
+        "type": "number"
+    },
+    {
+        "name": "maxCapacity",
+        "baseName": "maxCapacity",
+        "type": "number"
     }
 ];
 
@@ -11019,6 +11323,11 @@ function compile(schema, root, localRefs, baseId) {
     , defaultsHash = {}
     , customRules = [];
 
+  function patternCode(i, patterns) {
+    var regExpCode = opts.regExp ? 'regExp' : 'new RegExp';
+    return 'var pattern' + i + ' = ' + regExpCode + '(' + util.toQuotedString(patterns[i]) + ');';
+  }
+
   root = root || { schema: schema, refVal: refVal, refs: refs };
 
   var c = checkCompiling.call(this, schema, root, baseId);
@@ -11105,6 +11414,7 @@ function compile(schema, root, localRefs, baseId) {
         'equal',
         'ucs2length',
         'ValidationError',
+        'regExp',
         sourceCode
       );
 
@@ -11118,7 +11428,8 @@ function compile(schema, root, localRefs, baseId) {
         customRules,
         equal,
         ucs2length,
-        ValidationError
+        ValidationError,
+        opts.regExp
       );
 
       refVal[0] = validate;
@@ -11332,11 +11643,6 @@ function compIndex(schema, root, baseId) {
     if (c.schema == schema && c.root == root && c.baseId == baseId) return i;
   }
   return -1;
-}
-
-
-function patternCode(i, patterns) {
-  return 'var pattern' + i + ' = new RegExp(' + util.toQuotedString(patterns[i]) + ');';
 }
 
 
@@ -14077,6 +14383,7 @@ module.exports = function generate_pattern(it, $keyword, $ruleType) {
   var $errSchemaPath = it.errSchemaPath + '/' + $keyword;
   var $breakOnError = !it.opts.allErrors;
   var $data = 'data' + ($dataLvl || '');
+  var $valid = 'valid' + $lvl;
   var $isData = it.opts.$data && $schema && $schema.$data,
     $schemaValue;
   if ($isData) {
@@ -14085,12 +14392,21 @@ module.exports = function generate_pattern(it, $keyword, $ruleType) {
   } else {
     $schemaValue = $schema;
   }
-  var $regexp = $isData ? '(new RegExp(' + $schemaValue + '))' : it.usePattern($schema);
-  out += 'if ( ';
+  var $regExpCode = it.opts.regExp ? 'regExp' : 'new RegExp';
   if ($isData) {
-    out += ' (' + ($schemaValue) + ' !== undefined && typeof ' + ($schemaValue) + ' != \'string\') || ';
+    out += ' var ' + ($valid) + ' = true; try { ' + ($valid) + ' = ' + ($regExpCode) + '(' + ($schemaValue) + ').test(' + ($data) + '); } catch(e) { ' + ($valid) + ' = false; } if ( ';
+    if ($isData) {
+      out += ' (' + ($schemaValue) + ' !== undefined && typeof ' + ($schemaValue) + ' != \'string\') || ';
+    }
+    out += ' !' + ($valid) + ') {';
+  } else {
+    var $regexp = it.usePattern($schema);
+    out += ' if ( ';
+    if ($isData) {
+      out += ' (' + ($schemaValue) + ' !== undefined && typeof ' + ($schemaValue) + ' != \'string\') || ';
+    }
+    out += ' !' + ($regexp) + '.test(' + ($data) + ') ) {';
   }
-  out += ' !' + ($regexp) + '.test(' + ($data) + ') ) {   ';
   var $$outStack = $$outStack || [];
   $$outStack.push(out);
   out = ''; /* istanbul ignore else */
@@ -22796,6 +23112,22 @@ function charFromCodepoint(c) {
   );
 }
 
+// set a property of a literal object, while protecting against prototype pollution,
+// see https://github.com/nodeca/js-yaml/issues/164 for more details
+function setProperty(object, key, value) {
+  // used for this specific key only because Object.defineProperty is slow
+  if (key === '__proto__') {
+    Object.defineProperty(object, key, {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: value
+    });
+  } else {
+    object[key] = value;
+  }
+}
+
 var simpleEscapeCheck = new Array(256); // integer, for fast access
 var simpleEscapeMap = new Array(256);
 for (var i = 0; i < 256; i++) {
@@ -22974,7 +23306,7 @@ function mergeMappings(state, destination, source, overridableKeys) {
     key = sourceKeys[index];
 
     if (!_hasOwnProperty.call(destination, key)) {
-      destination[key] = source[key];
+      setProperty(destination, key, source[key]);
       overridableKeys[key] = true;
     }
   }
@@ -23034,17 +23366,7 @@ function storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, valu
       throwError(state, 'duplicated mapping key');
     }
 
-    // used for this specific key only because Object.defineProperty is slow
-    if (keyNode === '__proto__') {
-      Object.defineProperty(_result, keyNode, {
-        configurable: true,
-        enumerable: true,
-        writable: true,
-        value: valueNode
-      });
-    } else {
-      _result[keyNode] = valueNode;
-    }
+    setProperty(_result, keyNode, valueNode);
     delete overridableKeys[keyNode];
   }
 
@@ -28612,7 +28934,7 @@ var defaults = {
 var parseValues = function parseQueryStringValues(str, options) {
     var obj = {};
     var cleanStr = options.ignoreQueryPrefix ? str.replace(/^\?/, '') : str;
-    var limit = options.parameterLimit === Infinity ? undefined : options.parameterLimit;
+    var limit = options.parameterLimit === Infinity ? void undefined : options.parameterLimit;
     var parts = cleanStr.split(options.delimiter, limit);
 
     for (var i = 0; i < parts.length; ++i) {
@@ -28704,7 +29026,7 @@ var parseKeys = function parseQueryStringKeys(givenKey, val, options) {
             }
         }
 
-        keys.push(parent);
+        keys[keys.length] = parent;
     }
 
     // Loop through children appending to the array until we hit depth
@@ -28717,13 +29039,13 @@ var parseKeys = function parseQueryStringKeys(givenKey, val, options) {
                 return;
             }
         }
-        keys.push(segment[1]);
+        keys[keys.length] = segment[1];
     }
 
     // If there's a remainder, just add whatever is left
 
     if (segment) {
-        keys.push('[' + key.slice(segment.index) + ']');
+        keys[keys.length] = '[' + key.slice(segment.index) + ']';
     }
 
     return parseObject(keys, val, options);
@@ -29006,7 +29328,7 @@ var has = Object.prototype.hasOwnProperty;
 var hexTable = (function () {
     var array = [];
     for (var i = 0; i < 256; ++i) {
-        array.push('%' + ((i < 16 ? '0' : '') + i.toString(16)).toUpperCase());
+        array[array.length] = '%' + ((i < 16 ? '0' : '') + i.toString(16)).toUpperCase();
     }
 
     return array;
@@ -29024,7 +29346,7 @@ var compactQueue = function compactQueue(queue) {
 
             for (var j = 0; j < obj.length; ++j) {
                 if (typeof obj[j] !== 'undefined') {
-                    compacted.push(obj[j]);
+                    compacted[compacted.length] = obj[j];
                 }
             }
 
@@ -29053,7 +29375,7 @@ var merge = function merge(target, source, options) {
 
     if (typeof source !== 'object') {
         if (Array.isArray(target)) {
-            target.push(source);
+            target[target.length] = source;
         } else if (target && typeof target === 'object') {
             if ((options && (options.plainObjects || options.allowPrototypes)) || !has.call(Object.prototype, source)) {
                 target[source] = true;
@@ -29081,7 +29403,7 @@ var merge = function merge(target, source, options) {
                 if (targetItem && typeof targetItem === 'object' && item && typeof item === 'object') {
                     target[i] = merge(targetItem, item, options);
                 } else {
-                    target.push(item);
+                    target[target.length] = item;
                 }
             } else {
                 target[i] = item;
@@ -29183,8 +29505,8 @@ var compact = function compact(value) {
             var key = keys[j];
             var val = obj[key];
             if (typeof val === 'object' && val !== null && refs.indexOf(val) === -1) {
-                queue.push({ obj: obj, prop: key });
-                refs.push(val);
+                queue[queue.length] = { obj: obj, prop: key };
+                refs[refs.length] = val;
             }
         }
     }
