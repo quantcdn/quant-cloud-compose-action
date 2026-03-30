@@ -16,7 +16,7 @@ inputs:
   base_url:
     description: 'Quant Cloud API URL'
     required: false
-    default: 'https://dashboard.quantcdn.io/api/v3'
+    default: 'https://dashboard.quantcdn.io'
   image_suffix:
     description: 'Optional suffix to append to internal image tags (e.g. "feature-xyz" converts "nginx" to "nginx-feature-xyz")'
     required: false

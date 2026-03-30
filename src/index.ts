@@ -1,31 +1,24 @@
 import * as core from '@actions/core';
-import { 
+import {
     ComposeApi,
     ValidateComposeRequest,
-    ValidateCompose200Response
+    ValidateCompose200Response,
+    Configuration
 } from '@quantcdn/quant-client';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 
 interface ApiError {
-    body?: {
-        message?: string;
-    }
+    response?: {
+        status?: number;
+        data?: any;
+    };
+    message?: string;
 }
 
 interface ImageTagUpdates {
     [key: string]: string;
-}
-
-const apiOpts = (apiKey: string) => {
-    return{
-        applyToRequest: (requestOptions: any) => {
-            if (requestOptions && requestOptions.headers) {
-                requestOptions.headers["Authorization"] = `Bearer ${apiKey}`;
-            }
-        }
-    }
 }
 
 async function run() {
@@ -34,9 +27,9 @@ async function run() {
     const composeFilePath = core.getInput('compose_file', { required: true });
     const imageSuffix = core.getInput('image_suffix', { required: false });
     const imageTagUpdatesStr = core.getInput('image_tag_updates', { required: false });
-    
-    // Default to the public Quant Cloud API
-    const baseUrl = core.getInput('base_url', { required: false }) || 'https://dashboard.quantcdn.io/api/v3';
+
+    let baseUrl = core.getInput('base_url', { required: false }) || 'https://dashboard.quantcdn.io';
+    baseUrl = baseUrl.replace(/\/api\/v3\/?$/, '');
 
     // Read the docker-compose file
     const composeContent = fs.readFileSync(path.join(process.env.GITHUB_WORKSPACE || '', composeFilePath), 'utf8');
@@ -53,16 +46,19 @@ async function run() {
         return;
     }
 
-    const composeClient = new ComposeApi(baseUrl);
-    composeClient.setDefaultAuthentication(apiOpts(apiKey));
+    const config = new Configuration({
+        basePath: baseUrl,
+        accessToken: apiKey
+    });
+    const composeClient = new ComposeApi(config);
 
-    const validateRequest = new ValidateComposeRequest();
-    validateRequest.compose = yaml.dump(composeContentYaml);
-    
-    // Apply image suffix if provided (cleaner approach for consistent tagging)
+    const validateRequest: ValidateComposeRequest = {
+        compose: yaml.dump(composeContentYaml),
+        ...(imageSuffix && { imageSuffix })
+    };
+
     if (imageSuffix) {
         core.info(`Using image suffix: ${imageSuffix}`);
-        validateRequest.imageSuffix = imageSuffix;
     }
 
     core.info('Validating compose file');
@@ -70,18 +66,18 @@ async function run() {
     let validateResponse: ValidateCompose200Response;
 
     try {
-        const { body } = await composeClient.validateCompose(org, validateRequest);
-        validateResponse = body;
+        const { data } = await composeClient.validateCompose(org, validateRequest);
+        validateResponse = data;
     } catch (error: any) {
         core.error('Failed to validate compose file');
-        
-        // Log detailed error information
-        if (error.response) {
-            core.error(`Status: ${error.response.statusCode}`);
-            if (error.response.body) {
-                const errorBody = typeof error.response.body === 'string' 
-                    ? error.response.body 
-                    : JSON.stringify(error.response.body, null, 2);
+
+        const apiError = error as ApiError;
+        if (apiError.response) {
+            core.error(`Status: ${apiError.response.status}`);
+            if (apiError.response.data) {
+                const errorBody = typeof apiError.response.data === 'string'
+                    ? apiError.response.data
+                    : JSON.stringify(apiError.response.data, null, 2);
                 core.error(`Response: ${errorBody}`);
             }
         } else if (error.message) {
@@ -89,7 +85,7 @@ async function run() {
         } else {
             core.error(`Error: ${JSON.stringify(error, null, 2)}`);
         }
-        
+
         core.setFailed('Compose file validation failed - see logs above for details');
         return;
     }
@@ -101,7 +97,7 @@ async function run() {
         }
     }
 
-    const translatedCompose = validateResponse?.translatedComposeDefinition
+    const translatedCompose = validateResponse?.translatedComposeDefinition;
 
     if (!translatedCompose || !('containers' in translatedCompose) || !Array.isArray(translatedCompose.containers)) {
         core.setFailed('Compose file is invalid');
@@ -119,7 +115,7 @@ async function run() {
         core.info('Applying image tag updates');
         try {
             const imageTagUpdates = JSON.parse(imageTagUpdatesStr) as ImageTagUpdates;
-            
+
             for (const container of translatedCompose.containers) {
                 if (container.name && imageTagUpdates[container.name]) {
                     const tag = imageTagUpdates[container.name];
@@ -127,7 +123,7 @@ async function run() {
                     container.imageReference = {
                         type: tag.includes(':') ? 'external' : 'internal',
                         identifier: tag
-                    }
+                    };
                 }
             }
         } catch (error) {
@@ -137,8 +133,8 @@ async function run() {
 
     const output = JSON.stringify(translatedCompose, null, 2);
     core.setOutput('translated_compose', output);
-    core.info(`\n ✅ Successfully translated compose file`);
+    core.info('\nSuccessfully translated compose file');
     return;
 }
 
-run(); 
+run();
