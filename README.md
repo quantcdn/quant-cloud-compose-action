@@ -64,3 +64,11 @@ This is useful when you need to:
 - Update specific services to different versions
 - Mix internal and external image references
 - Use dynamic tags from previous steps
+## Runner security requirement
+
+This action uses the runner's embedded Node 24, which must be 24.22.1 or later
+for CVE-2026-111497. Update self-hosted runner containers/binaries to apply the
+fix. A `setup-node` workflow step changes the job shell runtime, not the Node
+binary GitHub uses to execute actions. A pre-run check rejects vulnerable
+runner versions before action API calls. Use the current maintained action tag
+or its immutable release SHA; historical pinned releases do not update themselves.

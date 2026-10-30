@@ -28,4 +28,5 @@ outputs:
     description: 'The translated docker compose specification'
 runs:
   using: 'node24'
+  pre: 'runtime-check.cjs'
   main: 'dist/index.js' 
