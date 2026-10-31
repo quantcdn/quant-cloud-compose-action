@@ -40,7 +40,7 @@ async function test() {
     }
 
     console.log('Test Configuration:');
-    console.log('  API Key:', apiKey.substring(0, 10) + '...');
+    console.log('  API Key: (set)');
     console.log('  Organization:', org);
     console.log('  Compose File:', composeFile);
     console.log('  Base URL:', baseUrl);
